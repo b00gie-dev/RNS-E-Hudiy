@@ -441,6 +441,17 @@ video=Composite-1:XXXxXXX@60,margin_left=0,margin_right=0,margin_top=0,margin_bo
 
 ## Audi RS3 8P CAN-Profil
 
+### FIS-Toplines
+
+Für die beiden vom Projekt beschriebenen oberen FIS-Zeilen werden die folgenden CAN-IDs verwendet. Die Werte entsprechen der aktuellen Konfiguration in `config.json`:
+
+| Konfigurationsschlüssel | CAN-ID | Funktion |
+| :--- | :--- | :--- |
+| `fis_line1` | `0x363` | Erste FIS-Zeile |
+| `fis_line2` | `0x365` | Zweite FIS-Zeile |
+
+Der Dienst `dis_toplines.py` liest diese IDs aus `can_ids.fis_line1` und `can_ids.fis_line2` und verwendet sie für die Ausgabe der FIS-Toplines.
+
 ### Multifunktionslenkrad: CAN-ID `0x5C3`
 
 Das originale Audi-Multifunktionslenkrad sendet die Tastenereignisse über die Standard-CAN-ID `0x5C3`. Die Nachrichten haben normalerweise **DLC 2**. Das erste Datenbyte beschreibt die Tasten-/Bediengruppe, das zweite Datenbyte die konkrete Aktion.
