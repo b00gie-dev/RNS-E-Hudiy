@@ -10,7 +10,7 @@
   "can_ids": {
     "light_status": "0x635",
     "time_data": "0x623",
-    "ignition_status": "0x271",
+    "ignition_status": "0x2C3",
     "tv_presence": "0x602",
     "fis_line1": "0x265",
     "fis_line2": "0x267",

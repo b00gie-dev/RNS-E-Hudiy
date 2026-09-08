@@ -438,3 +438,57 @@ video=Composite-1:XXXxXXX@60,margin_left=0,margin_right=0,margin_top=0,margin_bo
 | **Permission denied errors** | Service user cannot access files. | Run `sudo chown -R pi:pi /home/pi/rns-e_can` (and other project folders). |
 | **Services fail (`code=exited, status=1`)** | Python syntax error or missing library. | Check logs: `journalctl -u can_handler.service -f` |
 | **"Network is down"** | CAN interface failed to start. | Check `/boot/firmware/config.txt`. Verify oscillator frequency matches your HAT. Run `systemctl status systemd-networkd`. |
+
+## Audi RS3 8P CAN-Profil
+
+### Multifunktionslenkrad: CAN-ID `0x5C3`
+
+Das originale Audi-Multifunktionslenkrad sendet die Tastenereignisse über die Standard-CAN-ID `0x5C3`. Die Nachrichten haben normalerweise **DLC 2**. Das erste Datenbyte beschreibt die Tasten-/Bediengruppe, das zweite Datenbyte die konkrete Aktion.
+
+| CAN-ID | DLC | Datenbytes | Funktion |
+| :--- | ---: | :--- | :--- |
+| `0x5C3` | 2 | `39 00` | Keine Aktion / Ruhezustand |
+| `0x5C3` | 2 | `39 01` | MODE-/Funktions-Taste, abhängig vom Lenkradtyp |
+| `0x5C3` | 2 | `39 02` | Titel bzw. Sender zurück |
+| `0x5C3` | 2 | `39 03` | Titel bzw. Sender weiter |
+| `0x5C3` | 2 | `39 04` | Scan-/Suchfunktion aufwärts |
+| `0x5C3` | 2 | `39 05` | Scan-/Suchfunktion abwärts |
+| `0x5C3` | 2 | `39 06` | Lautstärke erhöhen |
+| `0x5C3` | 2 | `39 07` | Lautstärke verringern |
+| `0x5C3` | 2 | `39 08` | Druck auf das Scrollrad bzw. Bestätigung, je nach Lenkradvariante |
+| `0x5C3` | 2 | `3A 00` | MODE-/Funktions-Taste losgelassen |
+| `0x5C3` | 2 | `3A 1C` | MODE-/Funktions-Taste betätigt, Variante für kurze/lang anhaltende Betätigung |
+| `0x5C3` | 2 | `3C 00` | Telefon-Taste losgelassen |
+| `0x5C3` | 2 | `3C 2A` | Telefon-Taste betätigt |
+
+Die Bezeichnungen „zurück“, „weiter“, „Scan“ und „MODE“ können je nach RNS-E-Version, Lenkrad-Steuergerät und verbauter Tastenvariante leicht abweichen. `39 06` und `39 07` sind die Lautstärke-Befehle; diese werden auch von der aktuellen Konfiguration verwendet.
+
+### Im Projekt verwendete MFSW-Befehle
+
+Die Datei `config.json` wertet aktuell folgende Befehle aus:
+
+| Konfigurationsschlüssel | Datenbyte | Projektfunktion |
+| :--- | :--- | :--- |
+| `scroll_up` | `0x04` | `KEY_VOLUMEUP` |
+| `scroll_down` | `0x05` | `KEY_VOLUMEDOWN` |
+| `mode_press` | `0x08` | Zählt die MODE-/Bestätigungsbetätigung |
+| `release` | `0x00` | Ende der Betätigung; löst bei kurzer MODE-Betätigung `KEY_ENTER` aus |
+| — | `0x08` nach mindestens 5 Nachrichten | Lange MODE-Betätigung; löst `KEY_NEXTSONG` aus |
+
+Das Programm wertet beim Empfang von `0x5C3` ausschließlich das **zweite Datenbyte** aus. Deshalb werden in `config.json` nur die Werte `0x04`, `0x05`, `0x08` und `0x00` als Projektbefehle hinterlegt. Die vollständige Tabelle oben dokumentiert zusätzlich bekannte Frames, die das originale Lenkrad bzw. andere RNS-E-Varianten senden können.
+
+### Weitere für das Lenkrad relevante CAN-ID
+
+| CAN-ID | DLC | Funktion |
+| :--- | ---: | :--- |
+| `0x2C3` | 1 | Zündungs-/Klemme-15-Status der 8P-Plattform; wird vom Projekt für Auto-Shutdown und Statusüberwachung verwendet |
+
+### CAN-Aufzeichnung und Anpassung
+
+Bei einem anderen Lenkrad, einem nachgerüsteten Tastenmodul oder abweichenden Nachrichten sollten die Frames direkt im Fahrzeug geprüft werden:
+
+```bash
+candump can0
+```
+
+Während jeder einzelnen Taste mindestens einige Sekunden mitschneiden. Danach `can_ids.mfsw` und die Werte unter `key_mappings.mfsw_commands` in `config.json` anpassen. Vor Änderungen am Airbag- oder Lenkrad-Steuergerät die Batterie abklemmen und die Audi-Reparaturvorgaben beachten.
