@@ -48,9 +48,6 @@
     "tv_simulation": {
       "enabled": true
     },
-    "fis_display": {
-      "enabled": true
-    },
     "dis_mode": "nav",
     "source_controls": true,
     "mmi_controls": true,
